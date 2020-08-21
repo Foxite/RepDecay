@@ -85,12 +85,11 @@ namespace RepDecay.Controllers {
 						if (matches[i][0].Distance < DistanceModifier * matches[i][1].Distance) {
 							matchCount++;
 							if (matchCount >= MinMatches) {
-								goto endLoop;
+								break;
 							}
 						}
 					}
 
-					endLoop:
 					if (matchCount >= MinMatches) {
 						results.Add(filename);
 					}
