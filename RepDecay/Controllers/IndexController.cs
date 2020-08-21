@@ -48,8 +48,7 @@ namespace RepDecay.Controllers {
 
 									if (Uri.IsWellFormedUriString(imageUrl, UriKind.Absolute)) {
 										string postId = postDiv.Id.Substring("post-".Length);
-										string imagePath = Path.Combine(Program.ImageStoragePath, postId);
-										if (System.IO.File.Exists(imagePath)) {
+										if (System.IO.File.Exists(Path.Combine(Program.MatStoragePath, postId))) {
 											downloadNextPage = false;
 											break;
 										} else {
@@ -58,7 +57,7 @@ namespace RepDecay.Controllers {
 												result.Content.Headers.ContentType.MediaType == "image/jpeg" ||
 												result.Content.Headers.ContentType.MediaType == "image/png")) {
 												using Stream downloadStream = await result.Content.ReadAsStreamAsync();
-												await DownloadImages.ConvertImage(postId, downloadStream);
+												await Util.SaveMatsForImage(postId, downloadStream);
 											}
 										}
 									}

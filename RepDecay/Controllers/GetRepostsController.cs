@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -9,7 +8,6 @@ using System.Threading.Tasks;
 using Emgu.CV;
 using Emgu.CV.Features2D;
 using Emgu.CV.Flann;
-using Emgu.CV.Structure;
 using Emgu.CV.Util;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.Mvc;
@@ -26,10 +24,13 @@ namespace RepDecay.Controllers {
 		}
 
 		[HttpGet]
-		public async Task<IEnumerable<string>> Get(string id) {
-			string path = Path.Combine(Program.ImageStoragePath, id);
+		public async Task<IActionResult> Get(string id) {
+			if (string.IsNullOrWhiteSpace(id)) {
+				return BadRequest();
+			}
 
-			if (!System.IO.File.Exists(path)) {
+
+			if (!System.IO.File.Exists(Path.Combine(Program.MatStoragePath, id + ".xml"))) {
 				using var client = new HttpClient();
 				client.DefaultRequestHeaders.Add("User-Agent", Program.UserAgent);
 				var doc = new HtmlDocument();
@@ -40,11 +41,11 @@ namespace RepDecay.Controllers {
 				if (downloadImage.Content.Headers.ContentType.MediaType == "image/jpeg" ||
 					downloadImage.Content.Headers.ContentType.MediaType == "image/png") {
 					using Stream downloadStream = await downloadImage.Content.ReadAsStreamAsync();
-					await DownloadImages.ConvertImage(id, downloadStream);
+					await Util.SaveMatsForImage(id, downloadStream);
 				}
 			}
 
-			return DuplicateImages(path);
+			return new JsonResult(DuplicateImages(id));
 		}
 
 		private IEnumerable<string> DuplicateImages(string duplicateOf) {
@@ -52,16 +53,16 @@ namespace RepDecay.Controllers {
 			stw.Start();
 
 			using Mat imageMat = new Mat();
-			using FileStorage fs = new FileStorage(Path.Combine(Program.MatStoragePath, Path.GetFileName(duplicateOf) + ".xml"), FileStorage.Mode.Read);
+			using FileStorage fs = new FileStorage(Path.Combine(Program.MatStoragePath, duplicateOf + ".xml"), FileStorage.Mode.Read);
 			fs["mat"].ReadMat(imageMat);
 
 			ConcurrentBag<string> results = new ConcurrentBag<string>();
 			using var matcher = new FlannBasedMatcher(new KdTreeIndexParams(5), new SearchParams(50));
 
-			ParallelEnumerable.ForAll(Directory.GetFiles(Program.ImageStoragePath).AsParallel(), filename => {
+			ParallelEnumerable.ForAll(Directory.GetFiles(Program.MatStoragePath).AsParallel(), filename => {
 				if (filename != duplicateOf) {
 					using Mat otherImageMat = new Mat();
-					using FileStorage fs = new FileStorage(Path.Combine(Program.MatStoragePath, Path.GetFileName(filename) + ".xml"), FileStorage.Mode.Read);
+					using FileStorage fs = new FileStorage(filename, FileStorage.Mode.Read);
 					fs["mat"].ReadMat(otherImageMat);
 
 					using var matches = new VectorOfVectorOfDMatch();
