@@ -39,9 +39,8 @@ namespace RepDecay.Controllers {
 				HttpResponseMessage downloadImage = await client.GetAsync(metaImage.GetAttributeValue("content", null));
 				if (downloadImage.Content.Headers.ContentType.MediaType == "image/jpeg" ||
 					downloadImage.Content.Headers.ContentType.MediaType == "image/png") {
-					using FileStream fs = System.IO.File.OpenWrite(path);
 					using Stream downloadStream = await downloadImage.Content.ReadAsStreamAsync();
-					downloadStream.CopyTo(fs);
+					await DownloadImages.ConvertImage(id, downloadStream);
 				}
 			}
 
