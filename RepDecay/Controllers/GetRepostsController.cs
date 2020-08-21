@@ -51,10 +51,9 @@ namespace RepDecay.Controllers {
 		private IEnumerable<string> DuplicateImages(string duplicateOf) {
 			var stw = new Stopwatch();
 
-			using Mat imageMat = new Mat();
 			//using FileStorage fs = new FileStorage("C:/temp/mats.xml", FileStorage.Mode.Read);
 			stw.Start();
-			Program.FileStore["mat_" + duplicateOf].ReadMat(imageMat);
+			Mat imageMat = Program.MatStore[duplicateOf];
 
 			ConcurrentBag<string> results = new ConcurrentBag<string>();
 			using var matcher = new FlannBasedMatcher(new KdTreeIndexParams(5), new SearchParams(50));
@@ -62,8 +61,7 @@ namespace RepDecay.Controllers {
 			ParallelEnumerable.ForAll(Directory.GetFiles(Program.MatStoragePath).AsParallel(), filename => {
 				filename = Path.GetFileNameWithoutExtension(filename);
 				if (filename != duplicateOf) {
-					using Mat otherImageMat = new Mat();
-					Program.FileStore["mat_" + filename].ReadMat(otherImageMat);
+					Mat otherImageMat = Program.MatStore[filename];
 
 					using var matches = new VectorOfVectorOfDMatch();
 					matcher.KnnMatch(imageMat, otherImageMat, matches, 2);
