@@ -1,10 +1,13 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
+using Emgu.CV;
+using Emgu.CV.Structure;
+using Emgu.CV.Util;
 using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.ColorSpaces;
 using SixLabors.ImageSharp.ColorSpaces.Conversion;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using Hsv = SixLabors.ImageSharp.ColorSpaces.Hsv;
 
 namespace RepDecay {
 	public static class DownloadImages {
@@ -49,6 +52,18 @@ namespace RepDecay {
 
 			// Save as bmp for fast loading
 			await image.SaveAsBmpAsync(File.OpenWrite(Path.Combine(Program.ImageStoragePath, name)));
+
+			// Save mat data
+			using var cvImage = new Image<Gray, byte>(Path.Combine(Program.ImageStoragePath, name));
+			using var imageMat = new Mat();
+			await Task.Run(() => {
+				using var sift = new Emgu.CV.XFeatures2D.SIFT();
+				using var imagePoints = new VectorOfKeyPoint();
+
+				sift.DetectAndCompute(cvImage, null, imagePoints, imageMat, false);
+			});
+			using FileStorage fs = new FileStorage(Path.Combine(Program.MatStoragePath, name + ".xml"), FileStorage.Mode.Write);
+			fs.Write(imageMat, "mat");
 		}
 	}
 }

@@ -1,9 +1,9 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Emgu.CV;
@@ -50,29 +50,21 @@ namespace RepDecay.Controllers {
 		private IEnumerable<string> DuplicateImages(string duplicateOf) {
 			var stw = new Stopwatch();
 			stw.Start();
-			var image = new Image<Gray, byte>(duplicateOf);
 
-			var sift = new Emgu.CV.XFeatures2D.SIFT();
-			var imagePoints = new VectorOfKeyPoint();
-			var imageMat = new Mat();
-			sift.DetectAndCompute(image, null, imagePoints, imageMat, false);
+			using Mat imageMat = new Mat();
+			using FileStorage fs = new FileStorage(Path.Combine(Program.MatStoragePath, Path.GetFileName(duplicateOf) + ".xml"), FileStorage.Mode.Read);
+			fs["mat"].ReadMat(imageMat);
 
 			ConcurrentBag<string> results = new ConcurrentBag<string>();
+			using var matcher = new FlannBasedMatcher(new KdTreeIndexParams(5), new SearchParams(50));
 
-			// This is really slow. Like, REALLY slow.
-			// Processing 176 images on a 16-core machine took 26 seconds and peaked at 11 GB of RAM.
-			// We need to find ways of making this more efficient.
-			// Also, is there a way to run FLANN on a GPU?
 			ParallelEnumerable.ForAll(Directory.GetFiles(Program.ImageStoragePath).AsParallel(), filename => {
 				if (filename != duplicateOf) {
-					var otherImage = new Image<Gray, byte>(filename);
+					using Mat otherImageMat = new Mat();
+					using FileStorage fs = new FileStorage(Path.Combine(Program.MatStoragePath, Path.GetFileName(filename) + ".xml"), FileStorage.Mode.Read);
+					fs["mat"].ReadMat(otherImageMat);
 
-					var otherImageMat = new Mat();
-					var otherImagePoints = new VectorOfKeyPoint();
-					sift.DetectAndCompute(otherImage, null, otherImagePoints, otherImageMat, false);
-
-					var matches = new VectorOfVectorOfDMatch();
-					var matcher = new FlannBasedMatcher(new KdTreeIndexParams(5), new SearchParams(50));
+					using var matches = new VectorOfVectorOfDMatch();
 					matcher.KnnMatch(imageMat, otherImageMat, matches, 2);
 
 					// These constants have been stolen from https://github.com/magamig/duplicate_images_finder
@@ -84,13 +76,10 @@ namespace RepDecay.Controllers {
 						if (matches[i][0].Distance < DistanceModifier * matches[i][1].Distance) {
 							matchCount++;
 							if (matchCount >= MinMatches) {
+								results.Add(filename);
 								break;
 							}
 						}
-					}
-
-					if (matchCount >= MinMatches) {
-						results.Add(filename);
 					}
 				}
 			});
