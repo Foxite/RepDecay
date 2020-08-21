@@ -1,6 +1,6 @@
 This is a free web API for finding reposts on [Ruqqus](https://github.com/ruqqus/ruqqus).
 
-It currently supports only images, and it uses Emgu's wrapper for OpenCV to compare images.
+It currently supports only images, and it uses [Emgu's wrapper](http://www.emgu.com/wiki/index.php/Main_Page) for [OpenCV](https://opencv.org/) to compare images.
 
 It supports ONLY jpeg and png images. It does not support:
 - GIFs
