@@ -3,11 +3,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Emgu.CV;
 using Emgu.CV.Features2D;
 using Emgu.CV.Flann;
 using Emgu.CV.Structure;
 using Emgu.CV.Util;
+using HtmlAgilityPack;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -22,18 +26,24 @@ namespace RepDecay.Controllers {
 		}
 
 		[HttpGet]
-		public IEnumerable<string> Get(string id) {
+		public async Task<IEnumerable<string>> Get(string id) {
 			string path = Path.Combine(Program.ImageStoragePath, id);
 
-			/*
 			if (!System.IO.File.Exists(path)) {
-				using var client = new WebClient();
-				client.Headers.Add("User-Agent", Program.UserAgent);
-				var doc = new HtmlAgilityPack.HtmlDocument();
-				doc.LoadHtml(client.DownloadString($"https://ruqqus.com/post/{id}"));
-				HtmlAgilityPack.HtmlNode metaImage = doc.DocumentNode.SelectNodes("//html/head/meta[@property=\"og:image\"]").FirstOrDefault();
-				client.DownloadFile(metaImage.GetAttributeValue("content", null), path);
-			}//*/
+				using var client = new HttpClient();
+				client.DefaultRequestHeaders.Add("User-Agent", Program.UserAgent);
+				var doc = new HtmlDocument();
+				HttpResponseMessage result = await client.GetAsync($"https://ruqqus.com/post/{id}");
+				doc.LoadHtml(await result.Content.ReadAsStringAsync());
+				HtmlNode metaImage = doc.DocumentNode.SelectNodes("//html/head/meta[@property=\"og:image\"]").FirstOrDefault();
+				HttpResponseMessage downloadImage = await client.GetAsync(metaImage.GetAttributeValue("content", null));
+				if (downloadImage.Content.Headers.ContentType.MediaType == "image/jpeg" ||
+					downloadImage.Content.Headers.ContentType.MediaType == "image/png") {
+					using FileStream fs = System.IO.File.OpenWrite(path);
+					using Stream downloadStream = await downloadImage.Content.ReadAsStreamAsync();
+					downloadStream.CopyTo(fs);
+				}
+			}
 
 			return DuplicateImages(path);
 		}
@@ -49,10 +59,11 @@ namespace RepDecay.Controllers {
 			sift.DetectAndCompute(image, null, imagePoints, imageMat, false);
 
 			ConcurrentBag<string> results = new ConcurrentBag<string>();
-			//foreach (string filename in Directory.GetFiles("C:/temp/images")) {
-			// Note: Parallel execution takes a LOT of RAM.
-			// When processing 9 items concurrently, my memory usage rose to about 2GB momentarily.
-			// I have 16 threads on my PC so it was able to do everything at once. If your PC has less threads than you have images to process, memory usage will cap out.
+
+			// This is really slow. Like, REALLY slow.
+			// Processing 176 images on a 16-core machine took 26 seconds and peaked at 11 GB of RAM.
+			// We need to find ways of making this more efficient.
+			// Also, is there a way to run FLANN on a GPU?
 			ParallelEnumerable.ForAll(Directory.GetFiles(Program.ImageStoragePath).AsParallel(), filename => {
 				if (filename != duplicateOf) {
 					var otherImage = new Image<Gray, byte>(filename);

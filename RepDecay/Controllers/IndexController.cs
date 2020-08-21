@@ -26,12 +26,12 @@ namespace RepDecay.Controllers {
 				client = new HttpClient();
 				client.DefaultRequestHeaders.Add("User-Agent", Program.UserAgent);
 				string requestUri = $"https://ruqqus.com/+{guild}?sort=new";
-				HttpResponseMessage result = client.GetAsync(requestUri + "&page=10").Result;
+				HttpResponseMessage result = client.GetAsync(requestUri).Result;
 				if ((int) result.StatusCode == 200) {
 					threadStarted = true;
 					Task.Run(async () => {
 						try {
-							int pageCount = 1;
+							int pageCount = 0;
 							bool downloadNextPage = true;
 							while (downloadNextPage) {
 								pageCount++;
@@ -53,7 +53,9 @@ namespace RepDecay.Controllers {
 											break;
 										} else {
 											result = await client.GetAsync(imageUrl);
-											if (result.IsSuccessStatusCode) {
+											if (result.IsSuccessStatusCode && (
+												result.Content.Headers.ContentType.MediaType == "image/jpeg" ||
+												result.Content.Headers.ContentType.MediaType == "image/png")) {
 												using FileStream fs = System.IO.File.OpenWrite(imagePath);
 												using Stream downloadStream = await result.Content.ReadAsStreamAsync();
 												downloadStream.CopyTo(fs);
@@ -62,7 +64,7 @@ namespace RepDecay.Controllers {
 									}
 								}
 
-								if (postCount == 1) {
+								if (postCount == 0) {
 									// No more posts
 									downloadNextPage = false;
 								}
