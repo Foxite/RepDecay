@@ -52,9 +52,9 @@ namespace RepDecay.Controllers {
 			var stw = new Stopwatch();
 
 			using Mat imageMat = new Mat();
-			using FileStorage fs = new FileStorage("C:/temp/mats.xml", FileStorage.Mode.Read);
+			//using FileStorage fs = new FileStorage("C:/temp/mats.xml", FileStorage.Mode.Read);
 			stw.Start();
-			fs["mat_" + duplicateOf].ReadMat(imageMat);
+			Program.FileStore["mat_" + duplicateOf].ReadMat(imageMat);
 
 			ConcurrentBag<string> results = new ConcurrentBag<string>();
 			using var matcher = new FlannBasedMatcher(new KdTreeIndexParams(5), new SearchParams(50));
@@ -63,7 +63,7 @@ namespace RepDecay.Controllers {
 				filename = Path.GetFileNameWithoutExtension(filename);
 				if (filename != duplicateOf) {
 					using Mat otherImageMat = new Mat();
-					fs["mat_" + filename].ReadMat(otherImageMat);
+					Program.FileStore["mat_" + filename].ReadMat(otherImageMat);
 
 					using var matches = new VectorOfVectorOfDMatch();
 					matcher.KnnMatch(imageMat, otherImageMat, matches, 2);
