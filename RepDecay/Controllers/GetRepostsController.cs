@@ -30,7 +30,7 @@ namespace RepDecay.Controllers {
 			}
 
 
-			if (!System.IO.File.Exists(Path.Combine(Program.MatStoragePath, id + ".xml"))) {
+			if (!System.IO.File.Exists(Path.Combine(Program.ImageStoragePath, id + ".xml"))) {
 				using var client = new HttpClient();
 				client.DefaultRequestHeaders.Add("User-Agent", Program.UserAgent);
 				var doc = new HtmlDocument();
@@ -41,7 +41,7 @@ namespace RepDecay.Controllers {
 				if (downloadImage.Content.Headers.ContentType.MediaType == "image/jpeg" ||
 					downloadImage.Content.Headers.ContentType.MediaType == "image/png") {
 					using Stream downloadStream = await downloadImage.Content.ReadAsStreamAsync();
-					await Util.SaveMatsForImage(id, downloadStream);
+					await Util.SaveImageData(id, downloadStream);
 				}
 			}
 
@@ -53,18 +53,18 @@ namespace RepDecay.Controllers {
 
 			//using FileStorage fs = new FileStorage("C:/temp/mats.xml", FileStorage.Mode.Read);
 			stw.Start();
-			Mat imageMat = Program.MatStore[duplicateOf];
+			ImageData imageData = Program.ImageStore[duplicateOf];
 
 			ConcurrentBag<string> results = new ConcurrentBag<string>();
 			using var matcher = new FlannBasedMatcher(new KdTreeIndexParams(5), new SearchParams(50));
 
-			ParallelEnumerable.ForAll(Directory.GetFiles(Program.MatStoragePath).AsParallel(), filename => {
+			ParallelEnumerable.ForAll(Directory.GetFiles(Program.ImageStoragePath).AsParallel(), filename => {
 				filename = Path.GetFileNameWithoutExtension(filename);
 				if (filename != duplicateOf) {
-					Mat otherImageMat = Program.MatStore[filename];
+					ImageData otherImageData = Program.ImageStore[filename];
 
 					using var matches = new VectorOfVectorOfDMatch();
-					matcher.KnnMatch(imageMat, otherImageMat, matches, 2);
+					matcher.KnnMatch(imageData.Features, otherImageData.Features, matches, 2);
 
 					// These constants have been stolen from https://github.com/magamig/duplicate_images_finder
 					const float DistanceModifier = 0.3f;

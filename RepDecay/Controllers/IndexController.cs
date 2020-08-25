@@ -48,16 +48,17 @@ namespace RepDecay.Controllers {
 
 									if (Uri.IsWellFormedUriString(imageUrl, UriKind.Absolute)) {
 										string postId = postDiv.Id.Substring("post-".Length);
-										if (System.IO.File.Exists(Path.Combine(Program.MatStoragePath, postId))) {
+										if (System.IO.File.Exists(Path.Combine(Program.ImageStoragePath, postId))) {
 											downloadNextPage = false;
 											break;
 										} else {
 											result = await client.GetAsync(imageUrl);
 											if (result.IsSuccessStatusCode && (
 												result.Content.Headers.ContentType.MediaType == "image/jpeg" ||
+												result.Content.Headers.ContentType.MediaType == "image/webp" ||
 												result.Content.Headers.ContentType.MediaType == "image/png")) {
 												using Stream downloadStream = await result.Content.ReadAsStreamAsync();
-												await Util.SaveMatsForImage(postId, downloadStream);
+												await Util.SaveImageData(postId, downloadStream);
 											}
 										}
 									}

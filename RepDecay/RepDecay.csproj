@@ -7,7 +7,6 @@
   <ItemGroup>
     <PackageReference Include="Emgu.CV.runtime.windows" Version="4.3.0.3890" />
     <PackageReference Include="HtmlAgilityPack" Version="1.11.24" />
-    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0" />
   </ItemGroup>
 
 

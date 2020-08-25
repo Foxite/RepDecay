@@ -20,7 +20,7 @@
     "RepDecay": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "weatherforecast",
+      "launchUrl": "getreposts",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
