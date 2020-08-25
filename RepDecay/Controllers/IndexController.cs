@@ -48,7 +48,7 @@ namespace RepDecay.Controllers {
 
 									if (Uri.IsWellFormedUriString(imageUrl, UriKind.Absolute)) {
 										string postId = postDiv.Id.Substring("post-".Length);
-										if (System.IO.File.Exists(Path.Combine(Program.ImageStoragePath, postId))) {
+										if (System.IO.File.Exists(Path.Combine("C:", "temp", "images", postId))) {
 											downloadNextPage = false;
 											break;
 										} else {
@@ -57,8 +57,7 @@ namespace RepDecay.Controllers {
 												result.Content.Headers.ContentType.MediaType == "image/jpeg" ||
 												result.Content.Headers.ContentType.MediaType == "image/webp" ||
 												result.Content.Headers.ContentType.MediaType == "image/png")) {
-												using Stream downloadStream = await result.Content.ReadAsStreamAsync();
-												await Util.SaveImageData(postId, downloadStream);
+												await ImageStore.Instance.GetDataAsync(postId, result.Content.ReadAsStreamAsync);
 											}
 										}
 									}

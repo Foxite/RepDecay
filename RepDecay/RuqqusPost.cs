@@ -1,13 +1,21 @@
 using System;
+using System.Collections.Generic;
 
 namespace RepDecay {
-	public class RuqqusPost {
-		public DateTime Date { get; set; }
+	public class RuqqusPost : IEquatable<RuqqusPost> {
 		public string Id { get; set; }
-		public string Guild { get; set; }
+		public DateTime Date { get; }
+		public string Title { get; }
 
-		public int Upvotes { get; set; }
-		public int Downvotes { get; set; }
-		public int Score { get; set; }
+		public RuqqusPost(string id) {
+			Id = id;
+		}
+
+		public override bool Equals(object obj) => Equals(obj as RuqqusPost);
+		public bool Equals(RuqqusPost other) => other != null && Id == other.Id;
+		public override int GetHashCode() => HashCode.Combine(Id);
+
+		public static bool operator ==(RuqqusPost left, RuqqusPost right) => EqualityComparer<RuqqusPost>.Default.Equals(left, right);
+		public static bool operator !=(RuqqusPost left, RuqqusPost right) => !(left == right);
 	}
 }
