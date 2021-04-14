@@ -1,3 +1,9 @@
+**This project is abandoned. Feel free to ask me to transfer ownership.**
+
+(Unlike many others of my projects which have not had any activity in years, there is zero percent chance that I will ever pick it up again.)
+
+-----
+
 This is a free web API for finding reposts on [Ruqqus](https://github.com/ruqqus/ruqqus).
 
 It currently supports only images, and it uses [Emgu's wrapper](http://www.emgu.com/wiki/index.php/Main_Page) for [OpenCV](https://opencv.org/) to compare images.
